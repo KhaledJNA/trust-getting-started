@@ -1,0 +1,6 @@
+{
+  "sub": "33333333-3333-3333-3333-333333333333",
+  "preferred_username": "sample.denied",
+  "acr": "basic",
+  "realm_access": { "roles": [] }
+}

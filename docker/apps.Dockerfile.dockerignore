@@ -1,0 +1,14 @@
+# Build context = the folder holding both repositories: send only what
+# the build needs (see apps.Dockerfile).
+*
+!trust-getting-started/pom.xml
+!trust-getting-started/.mvn
+!trust-getting-started/trust-sample-downstream-api
+!trust-getting-started/trust-sample-api
+!trust-getting-started/trust-sample-bff
+!trust-security
+**/target
+**/.git
+**/.idea
+**/.DS_Store
+**/*.iml

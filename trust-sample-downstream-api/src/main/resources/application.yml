@@ -1,0 +1,41 @@
+# trust-sample-downstream-api - opaque-token resource server.
+#
+# Every token is validated by asking Keycloak (RFC 7662 introspection),
+# never decoded locally. Secrets are never in this file: they are read from
+# env/trust-sample-client-secrets.env in trust-getting-started, written when
+# Keycloak imports the trust-sample realm (override the path with
+# TRUST_SAMPLE_SECRETS). The file is mandatory: without it the application
+# refuses to start and names it.
+spring:
+  application:
+    name: trust-sample-downstream-api
+  config:
+    import: file:${TRUST_SAMPLE_SECRETS:../env/trust-sample-client-secrets.env}[.properties]
+  security:
+    oauth2:
+      resourceserver:
+        opaquetoken:
+          introspection-uri: ${trust-sample.realm-url}/protocol/openid-connect/token/introspect
+          client-id: trust-sample-downstream-api
+          client-secret: ${TRUST_SAMPLE_DOWNSTREAM_API_CLIENT_SECRET}
+
+server:
+  port: 9083
+
+trust-sample:
+  realm-url: ${TRUST_SAMPLE_REALM_URL:http://localhost:18080/realms/trust-sample}
+
+trust:
+  security:
+    resource-server:
+      client-id: trust-sample-downstream-api
+      public-paths: /public/**
+    # Applied to the introspection response, exactly as to a JWT's claims.
+    authorities:
+      mappings:
+        - path: realm_access.roles
+          prefix: ROLE_
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [subject=%X{subject}] %logger{36} - %msg%n"

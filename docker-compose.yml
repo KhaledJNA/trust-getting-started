@@ -1,0 +1,102 @@
+# The whole Trust demo with nothing but Docker:
+#
+#     docker compose up --build
+#
+# then open http://localhost:9081 (users and password: README.md).
+#
+#   keycloak         public Keycloak image, imports realm/ on first start
+#   keycloak-setup   one-shot: writes the generated client secrets to env/
+#   gateway          the samples' network: publishes 9081-9083 and makes
+#                    localhost:18080 inside it reach Keycloak, so the browser
+#                    and the samples see the same issuer URL
+#   trust-sample-*   the three samples, built with the libraries of
+#                    ../trust-security
+#
+# Developer mode (samples run from your IDE / JDK): only Keycloak is needed,
+# see scripts/dev.sh.
+#
+# Bind mounts carry `z` so that SELinux hosts (Fedora, RHEL) let the
+# containers read them; Docker ignores it elsewhere.
+name: trust-getting-started
+
+# One image for the three samples, built by trust-sample-bff only (three
+# identical builds of one tag would collide); the other two reuse it.
+x-sample: &sample
+  image: trust-sample-apps:local
+  pull_policy: never
+  network_mode: service:gateway
+  depends_on:
+    keycloak-setup:
+      condition: service_completed_successfully
+    gateway:
+      condition: service_started
+  environment:
+    TRUST_SAMPLE_SECRETS: /env/trust-sample-client-secrets.env
+  volumes:
+    - ./env:/env:ro,z
+  restart: unless-stopped
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.2@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067
+    # Demo only: start-dev (HTTP, embedded database kept in a volume).
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./realm:/opt/keycloak/data/import:ro,z
+      - keycloak-data:/opt/keycloak/data
+    ports:
+      - "127.0.0.1:18080:8080"
+    # Back-channel logout: Keycloak calls the BFF on the host's port 9081.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+
+  keycloak-setup:
+    image: quay.io/keycloak/keycloak:26.7.2@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067
+    entrypoint: ["bash", "/setup/keycloak-setup.sh"]
+    user: root  # writes env/ through a bind mount
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./docker/keycloak-setup.sh:/setup/keycloak-setup.sh:ro,z
+      - ./env:/out:z
+
+  gateway:
+    image: alpine/socat:1.8.0.3@sha256:beb4a68d9e4fe6b0f21ea774a0fde6c31f580dde6368939ed70100c5385b015e
+    command: ["tcp-listen:18080,fork,reuseaddr", "tcp-connect:keycloak:8080"]
+    ports:
+      - "127.0.0.1:9081:9081"
+      - "127.0.0.1:9082:9082"
+      - "127.0.0.1:9083:9083"
+
+  trust-sample-downstream-api:
+    <<: *sample
+    command: ["/app/trust-sample-downstream-api.jar"]
+
+  trust-sample-api:
+    <<: *sample
+    command: ["/app/trust-sample-api.jar"]
+
+  trust-sample-bff:
+    <<: *sample
+    build:
+      context: ..
+      dockerfile: trust-getting-started/docker/apps.Dockerfile
+    pull_policy: build
+    command: ["/app/trust-sample-bff.jar"]
+
+volumes:
+  keycloak-data:

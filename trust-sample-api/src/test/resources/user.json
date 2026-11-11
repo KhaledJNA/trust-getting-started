@@ -1,0 +1,7 @@
+{
+  "sub": "11111111-1111-1111-1111-111111111111",
+  "preferred_username": "sample.user",
+  "acr": "basic",
+  "realm_access": { "roles": ["SAMPLE_USER"] },
+  "resource_access": { "trust-sample-api": { "roles": ["SAMPLE_READER"] } }
+}

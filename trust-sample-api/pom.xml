@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.1.1</version>
+		<relativePath/>
+	</parent>
+	<groupId>com.trust.sample</groupId>
+	<artifactId>trust-sample-api</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>trust-sample-api</name>
+	<description>Trust sample application: JWT resource server with ACR step-up, fine-grained UMA authorization (Keycloak) and outgoing calls to trust-sample-downstream-api by token exchange (RFC 8693) and client_credentials.</description>
+
+	<properties>
+		<java.version>21</java.version>
+		<trust.version>0.0.1-SNAPSHOT</trust.version>
+	</properties>
+
+	<!-- One version for every Trust module: the BOM. Spring Boot stays this
+	     application's own choice (the parent above). -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.trust</groupId>
+				<artifactId>trust-dependencies</artifactId>
+				<version>${trust.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>com.trust</groupId>
+			<artifactId>trust-security-resource-server-starter</artifactId>
+		</dependency>
+		<!-- @RequiresPermission decisions taken by Keycloak Authorization Services (UMA). -->
+		<dependency>
+			<groupId>com.trust</groupId>
+			<artifactId>trust-security-keycloak-authorization-starter</artifactId>
+		</dependency>
+		<!-- Outgoing calls: token exchange, client_credentials, retry, circuit breaker. -->
+		<dependency>
+			<groupId>com.trust</groupId>
+			<artifactId>trust-rest-client-starter</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- @WithTrustJwt: a JWT claim set run through the application's real authorities mapping. -->
+		<dependency>
+			<groupId>com.trust</groupId>
+			<artifactId>trust-resource-server-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- TestAuthorizationDecisionClient: PERMIT/DENY driven by the test, no Keycloak. -->
+		<dependency>
+			<groupId>com.trust</groupId>
+			<artifactId>trust-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

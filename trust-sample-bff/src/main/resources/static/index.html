@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trust sample</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header>
+  <h1>Trust sample</h1>
+  <div id="session">…</div>
+</header>
+
+<main>
+  <section id="anonymous" hidden>
+    <p>Log in as <code>sample.user</code>, <code>sample.manager</code> or <code>sample.denied</code>
+      (password <code>sample</code>).</p>
+    <a class="button" href="/oauth2/authorization/trust-sample">Log in</a>
+  </section>
+
+  <section id="authenticated" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Roles</h2>
+        <p>Realm and client roles mapped to authorities by trust-sample-api.</p>
+        <button data-call="GET /api/me">API /me <small>SAMPLE_USER</small></button>
+        <button data-call="GET /api/reader">API /reader <small>client role SAMPLE_READER</small></button>
+      </div>
+      <div class="card">
+        <h2>Step-up (ACR)</h2>
+        <p>Needs <code>acr=strong</code> (OTP). A 401 challenge starts a step-up login.</p>
+        <button data-call="GET /api/sensitive">API /sensitive</button>
+        <button data-call="GET /api/local/strong">BFF /local/strong</button>
+      </div>
+      <div class="card">
+        <h2>Fine-grained (UMA)</h2>
+        <p>Decided by Keycloak policies. Odd ids belong to <code>tenant-a</code>, even ids to <code>tenant-b</code>.</p>
+        <button data-call="GET /api/documents/1">Read document 1</button>
+        <button data-call="PUT /api/documents/1">Write document 1 <small>manager, tenant-a</small></button>
+        <button data-call="PUT /api/documents/2">Write document 2 <small>tenant-b: denied</small></button>
+      </div>
+      <div class="card">
+        <h2>Service to service</h2>
+        <p>How trust-sample-downstream-api is reached.</p>
+        <button data-call="GET /api/downstream/direct">Direct <small>session token, introspected</small></button>
+        <button data-call="GET /api/downstream/on-behalf">Via API <small>token exchange</small></button>
+        <button data-call="GET /api/downstream/system">Via API <small>client_credentials</small></button>
+        <button data-call="GET /api/async/me">Async relay <small>@Async thread</small></button>
+      </div>
+    </div>
+
+    <form id="logout" method="post" action="/logout">
+      <input type="hidden" name="_csrf" id="csrf">
+      <button type="submit" class="secondary">Log out</button>
+    </form>
+  </section>
+
+  <section id="result-panel" hidden>
+    <h2 id="result-title"></h2>
+    <pre id="result"></pre>
+  </section>
+</main>
+</body>
+</html>

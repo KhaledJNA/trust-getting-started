@@ -1,0 +1,5 @@
+# Repositories cloned next to trust-getting-started by scripts/clone.sh
+# (the samples are in this repository, the libraries in trust-security).
+# One name per line; an optional second column is the branch (default: the
+# repository's default branch).
+trust-security

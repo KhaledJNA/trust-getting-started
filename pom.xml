@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Builds the Trust libraries (../trust-security, cloned next to this
+  repository by scripts/clone.sh) and the three samples in one command:
+      ./mvnw install -DskipTests
+  The certification suite against a real Keycloak (Testcontainers, needs
+  Docker) is a profile of trust-security:
+      ./mvnw install -Pintegration-tests
+  Nothing here is published: this pom only aggregates.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.trust</groupId>
+	<artifactId>trust-getting-started</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>trust-getting-started</name>
+
+	<modules>
+		<module>../trust-security</module>
+		<module>trust-sample-downstream-api</module>
+		<module>trust-sample-api</module>
+		<module>trust-sample-bff</module>
+	</modules>
+</project>

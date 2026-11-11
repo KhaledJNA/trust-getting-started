@@ -1,0 +1,70 @@
+# trust-sample-bff - Backend-for-Frontend.
+#
+# The browser only ever holds an HTTP session cookie; tokens stay here.
+# Secrets are never in this file: they are read from
+# env/trust-sample-client-secrets.env in trust-getting-started, written when
+# Keycloak imports the trust-sample realm (override the path with
+# TRUST_SAMPLE_SECRETS). The file is mandatory: without it the application
+# refuses to start and names it.
+spring:
+  application:
+    name: trust-sample-bff
+  config:
+    import: file:${TRUST_SAMPLE_SECRETS:../env/trust-sample-client-secrets.env}[.properties]
+  security:
+    oauth2:
+      client:
+        registration:
+          # The registration id is part of the back-channel logout URL
+          # registered in Keycloak (/logout/connect/back-channel/trust-sample).
+          trust-sample:
+            provider: trust-sample
+            client-id: trust-sample-bff
+            client-secret: ${TRUST_SAMPLE_BFF_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid, profile, email
+        provider:
+          trust-sample:
+            issuer-uri: ${trust-sample.realm-url}
+  http:
+    serviceclient:
+      api:
+        base-url: ${TRUST_SAMPLE_API_URL:http://localhost:9082}
+        connect-timeout: 2s
+        read-timeout: 5s
+      downstream:
+        base-url: ${TRUST_SAMPLE_DOWNSTREAM_URL:http://localhost:9083}
+        connect-timeout: 2s
+        read-timeout: 5s
+
+server:
+  port: 9081
+  servlet:
+    session:
+      timeout: 30m
+
+trust-sample:
+  realm-url: ${TRUST_SAMPLE_REALM_URL:http://localhost:18080/realms/trust-sample}
+
+trust:
+  security:
+    public-paths:
+      - /
+      - /index.html
+      - /app.js
+      - /app.css
+      - /api/session
+    post-logout-redirect-uri: http://localhost:9081/
+    authorities:
+      mappings:
+        - path: realm_access.roles
+          prefix: ROLE_
+    oauth2-client:
+      headers:
+        content-security-policy:
+          enabled: true
+          policy: "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self' http://localhost:18080"
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [correlationId=%X{correlationId}] [subject=%X{subject}] %logger{36} - %msg%n"

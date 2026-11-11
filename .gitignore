@@ -1,0 +1,10 @@
+.DS_Store
+.idea/
+target/
+build/
+# Written by the keycloak-setup container: generated client secrets.
+# env/ itself is versioned (.gitkeep) so that it belongs to the user, not
+# to the root user of the container that would otherwise create it (Linux).
+env/*.env
+*.iml
+.vscode/

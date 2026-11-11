@@ -1,0 +1,66 @@
+# trust-sample-api - JWT resource server.
+#
+# Secrets are never in this file: they are read from
+# env/trust-sample-client-secrets.env in trust-getting-started, written when
+# Keycloak imports the trust-sample realm (override the path with
+# TRUST_SAMPLE_SECRETS). The file is mandatory: without it the application
+# refuses to start and names it.
+spring:
+  application:
+    name: trust-sample-api
+  config:
+    import: file:${TRUST_SAMPLE_SECRETS:../env/trust-sample-client-secrets.env}[.properties]
+  security:
+    oauth2:
+      # Incoming calls: JWTs signed by the trust-sample realm, audience
+      # checked against trust.security.resource-server.client-id below.
+      resourceserver:
+        jwt:
+          issuer-uri: ${trust-sample.realm-url}
+      # Outgoing calls to trust-sample-downstream-api, as this application's
+      # own client (trust-sample-api). The token endpoint is given directly
+      # (no issuer discovery at startup).
+      client:
+        registration:
+          downstream-on-behalf:
+            provider: trust-sample
+            client-id: trust-sample-api
+            client-secret: ${TRUST_SAMPLE_API_CLIENT_SECRET}
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+          downstream-system:
+            provider: trust-sample
+            client-id: trust-sample-api
+            client-secret: ${TRUST_SAMPLE_API_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: sample.system
+        provider:
+          trust-sample:
+            token-uri: ${trust-sample.realm-url}/protocol/openid-connect/token
+  http:
+    serviceclient:
+      downstream:
+        base-url: ${TRUST_SAMPLE_DOWNSTREAM_URL:http://localhost:9083}
+        connect-timeout: 2s
+        read-timeout: 5s
+
+server:
+  port: 9082
+
+trust-sample:
+  realm-url: ${TRUST_SAMPLE_REALM_URL:http://localhost:18080/realms/trust-sample}
+
+trust:
+  security:
+    resource-server:
+      client-id: trust-sample-api
+      public-paths: /public/**
+    authorities:
+      mappings:
+        - path: realm_access.roles
+          prefix: ROLE_
+        - path: resource_access.{clientId}.roles
+          prefix: ROLE_
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [correlationId=%X{correlationId}] [subject=%X{subject}] %logger{36} - %msg%n"

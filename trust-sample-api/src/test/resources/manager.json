@@ -1,0 +1,6 @@
+{
+  "sub": "22222222-2222-2222-2222-222222222222",
+  "preferred_username": "sample.manager",
+  "acr": "basic",
+  "realm_access": { "roles": ["SAMPLE_USER", "SAMPLE_MANAGER"] }
+}
